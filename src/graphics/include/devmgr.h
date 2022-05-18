@@ -117,7 +117,7 @@ public:
     static BOOL WINAPI EnumDDCallbackEx(GUID FAR *lpGUID, LPSTR lpDriverDescription, LPSTR lpDriverName, LPVOID lpContext, HMONITOR hm);
     static HRESULT WINAPI EnumModesCallback(LPDDSURFACEDESC2 lpDDSurfaceDesc, LPVOID lpContext);
     bool GetMode(int driverNum, int devNum, int modeNum, UINT *pWidth, UINT *pHeight, UINT *pDepth);
-    DXContext *CreateContext(int driverNum, int devNum, int resNum, BOOL fullScreen, HWND hWnd);
+    DXContext *CreateContext(int driverNum, int devNum, int resNum, int outputWidth, int outputHeight, BOOL fullScreen, HWND hWnd);
 };
 
 #endif // _DEVMGR_H_

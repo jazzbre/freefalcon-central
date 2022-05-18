@@ -1109,6 +1109,8 @@ void C_Handler::CheckDrawThrough()
     }
 }
 
+extern float g_renderScale;
+
 void C_Handler::Update()
 {
     WHLIST *cur;
@@ -1265,8 +1267,12 @@ void C_Handler::CopyToPrimary()
         // dest.top+=PrimaryRect_.top;
         // dest.bottom+=PrimaryRect_.top;
 
+        dest.top *= g_renderScale;
+        dest.left *= g_renderScale;
+        dest.right *= g_renderScale;
+        dest.bottom *= g_renderScale;
         // ShowCursor(FALSE);
-        if (src.left < src.right and src.top < src.bottom)
+        //if (src.left < src.right and src.top < src.bottom)
             Primary_->Compose(Front_, &src, &dest);
 
         // ShowCursor(TRUE);
@@ -2108,6 +2114,8 @@ void C_Handler::RemovingControl(C_Base *control)
     }
 }
 
+extern float g_renderScale;
+
 long C_Handler::EventHandler(HWND hwnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
     C_Window *overme;
@@ -2147,8 +2155,8 @@ long C_Handler::EventHandler(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
     p.x = LOWORD(lParam);
     p.y = HIWORD(lParam);
     ScreenToClient(hwnd, &p);
-    MouseX = (WORD)p.x;
-    MouseY = (WORD)p.y;
+    MouseX = (WORD)p.x / g_renderScale;
+    MouseY = (WORD)p.y / g_renderScale;
     overme = GetWindow(MouseX, MouseY);
 
     if (overme == NULL)
@@ -2189,8 +2197,8 @@ long C_Handler::EventHandler(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
 
             MouseDown_ = C_TYPE_LMOUSEDOWN;
             MouseDownTime_ = GetCurrentTime();
-            MouseX = LOWORD(lParam);
-            MouseY = HIWORD(lParam);
+            MouseX = LOWORD(lParam) / g_renderScale;
+            MouseY = HIWORD(lParam) / g_renderScale;
             overme = GetWindow(MouseX, MouseY);
 
             if (overme == NULL)
@@ -2255,8 +2263,8 @@ long C_Handler::EventHandler(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
                 }
 
             MouseDown_ = 0;
-            MouseX = LOWORD(lParam);
-            MouseY = HIWORD(lParam);
+            MouseX = LOWORD(lParam) / g_renderScale;
+            MouseY = HIWORD(lParam) / g_renderScale;
             overme = GetWindow(MouseX, MouseY);
 
             if (overme == NULL)
@@ -2400,8 +2408,8 @@ long C_Handler::EventHandler(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
                 break;
             }
 
-            MouseX = LOWORD(lParam);
-            MouseY = HIWORD(lParam);
+            MouseX = LOWORD(lParam) / g_renderScale;
+            MouseY = HIWORD(lParam) / g_renderScale;
             overme = GetWindow(MouseX, MouseY);
 
             if (overme == NULL)
@@ -2458,8 +2466,8 @@ long C_Handler::EventHandler(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
             LastUp_ = 0;
             LastUpTime_ = 0;
             OldMouseControl_ = MouseControl_;
-            MouseX = LOWORD(lParam);
-            MouseY = HIWORD(lParam);
+            MouseX = LOWORD(lParam) / g_renderScale;
+            MouseY = HIWORD(lParam) / g_renderScale;
             overme = GetWindow(MouseX, MouseY);
 
             if (overme == NULL)
@@ -2575,8 +2583,8 @@ long C_Handler::EventHandler(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
 
             MessageType = C_TYPE_RMOUSEDOWN;
 
-            MouseX = LOWORD(lParam);
-            MouseY = HIWORD(lParam);
+            MouseX = LOWORD(lParam) / g_renderScale;
+            MouseY = HIWORD(lParam) / g_renderScale;
             overme = GetWindow(MouseX, MouseY);
 
             if (overme == NULL)
@@ -2644,8 +2652,8 @@ long C_Handler::EventHandler(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
             LastUpTime_ = GetMessageTime();
 
             MouseDown_ = 0;
-            MouseX = LOWORD(lParam);
-            MouseY = HIWORD(lParam);
+            MouseX = LOWORD(lParam) / g_renderScale;
+            MouseY = HIWORD(lParam) / g_renderScale;
             overme = GetWindow(MouseX, MouseY);
 
             if (overme == NULL)
@@ -2721,8 +2729,8 @@ long C_Handler::EventHandler(HWND hwnd, UINT message, WPARAM wParam, LPARAM lPar
                 break;
             }
 
-            MouseX = LOWORD(lParam);
-            MouseY = HIWORD(lParam);
+            MouseX = LOWORD(lParam) / g_renderScale;
+            MouseY = HIWORD(lParam) / g_renderScale;
             overme = GetWindow(MouseX, MouseY);
 
             if (overme == NULL)

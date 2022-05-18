@@ -6,6 +6,8 @@
 #include "FalcLib/include/playerop.h"
 #include "FalcLib/include/dispopts.h"
 #include <commctrl.h>
+#include <shlobj.h>
+#include <windows.h>
 
 extern bool g_bForceSoftwareGUI;
 void TheaterReload(char *theater, char *loddata);
@@ -21,33 +23,33 @@ FalconDisplayConfiguration::FalconDisplayConfiguration(void)
 
     width[Movie] = 640;
     height[Movie] = 480;
-    depth[Movie] = 16;
+    depth[Movie] = 32;
     doubleBuffer[Movie] = FALSE;
 
     width[UI] = 800;
     height[UI] = 600;
-    depth[UI] = 16;
+    depth[UI] = 32;
     doubleBuffer[UI] = FALSE;
 
     width[UILarge] = 1024;
     height[UILarge] = 768;
-    depth[UILarge] = 16;
+    depth[UILarge] = 32;
     doubleBuffer[UILarge] = FALSE;
 
     width[Planner] = 800;
     height[Planner] = 600;
-    depth[Planner] = 16;
+    depth[Planner] = 32;
     doubleBuffer[Planner] = FALSE;
 
     width[Layout] = 1024;
     height[Layout] = 768;
-    depth[Layout] = 16;
+    depth[Layout] = 32;
     doubleBuffer[Layout] = FALSE;
 
     //default values
     width[Sim] = 640;
     height[Sim] = 480;
-    depth[Sim] = 16;
+    depth[Sim] = 32;
     doubleBuffer[Sim] = TRUE;
 
     deviceNumber = 0;
@@ -138,8 +140,35 @@ void FalconDisplayConfiguration::Cleanup(void)
     DeviceIndependentGraphicsCleanup();
 }
 
+static void EnableWindowsHDPI()
+{
+    auto user32Module = LoadLibraryA("User32.dll");
+    if (user32Module)
+    {
+        typedef BOOL(WINAPI* FSetProcessDPIAware)();
+        auto fSetProcessDPIAware = (FSetProcessDPIAware)GetProcAddress(user32Module, "SetProcessDPIAware");
+        if (fSetProcessDPIAware)
+        {
+            fSetProcessDPIAware();
+        }
+        FreeLibrary(user32Module);
+    }
+    auto shcoreModule = LoadLibraryA("Shcore.dll");
+    if (shcoreModule)
+    {
+        typedef HRESULT(WINAPI* FSetProcessDpiAwareness)(int);
+        auto fSetProcessDpiAwareness = (FSetProcessDpiAwareness)GetProcAddress(shcoreModule, "SetProcessDpiAwareness");
+        if (fSetProcessDpiAwareness)
+        {
+            fSetProcessDpiAwareness(2);
+        }
+        FreeLibrary(shcoreModule);
+    }
+}
+
 void FalconDisplayConfiguration::MakeWindow(void)
 {
+    EnableWindowsHDPI();
     RECT rect;
 
     // Choose an appropriate window style
@@ -151,7 +180,7 @@ void FalconDisplayConfiguration::MakeWindow(void)
     }
     else
     {
-        windowStyle = WS_OVERLAPPEDWINDOW;
+        windowStyle = WS_POPUP;//WS_OVERLAPPEDWINDOW;
         xOffset = 0;
         yOffset = 0;
     }
@@ -208,6 +237,22 @@ void FalconDisplayConfiguration::EnterMode(DisplayMode newMode, int theDevice, i
     LRESULT result = SendMessage(appWin, FM_DISP_ENTER_MODE, newMode, theDevice bitor (Driver << 16));
 }
 
+static void GetDesktopResolution(int& width, int& height)
+{
+    RECT desktop;
+    // Get a handle to the desktop window
+    const HWND hDesktop = GetDesktopWindow();
+    // Get the size of screen to the variable desktop
+    GetWindowRect(hDesktop, &desktop);
+    // The top left corner will have coordinates (0,0)
+    // and the bottom right corner will have coordinates
+    // (horizontal, vertical)
+    width = desktop.right;
+    height = desktop.bottom;
+}
+
+float g_renderScale = 1;
+
 void FalconDisplayConfiguration::_EnterMode(DisplayMode newMode, int theDevice, int Driver)
 #else
 void FalconDisplayConfiguration::_EnterMode(DisplayMode newMode, int theDevice, int Driver)
@@ -226,10 +271,30 @@ void FalconDisplayConfiguration::EnterMode(DisplayMode newMode, int theDevice, i
     // sfr: only after we are finished
     //currentMode = newMode;
 
+    int outputWidth = width[newMode];
+    int outputHeight = height[newMode];
+
+    if(newMode == DisplayMode::UILarge)
+    {
+        xOffset =0;
+        yOffset =0;
+        int resolutionWidth;
+        int resolutionHeight;
+        GetDesktopResolution(resolutionWidth, resolutionHeight);
+        float scale = (int)max((float)resolutionHeight / (float)outputHeight, 1.0f);
+        g_renderScale = scale;        
+        outputWidth = (int)((float)outputWidth * scale);
+        outputHeight = (int)((float)outputHeight * scale);
+    }
+
     rect.top = rect.left = 0;
-    rect.right = width[newMode];
-    rect.bottom = height[newMode];
+    rect.right = outputWidth;
+    rect.bottom = outputHeight;
+
     AdjustWindowRect(&rect, windowStyle, FALSE);
+
+    outputWidth = rect.right;
+    outputHeight = rect.bottom;
 
     DeviceManager::DDDriverInfo *pDI = FalconDisplay.devmgr.GetDriver(Driver);
 
@@ -294,7 +359,7 @@ void FalconDisplayConfiguration::EnterMode(DisplayMode newMode, int theDevice, i
 
     theDisplayDevice.Setup(
         Driver, theDevice,
-        width[newMode], height[newMode], depth[newMode],
+        outputWidth, outputHeight, depth[newMode],
         displayFullScreen, doubleBuffer[newMode], appWin, newMode == Sim
     );
 

@@ -13,7 +13,7 @@
 #include "FalcLib/include/playerop.h"
 
 // The pixel depth is hardwired for now
-static const int BITS_PER_PIXEL = 16;
+static const int BITS_PER_PIXEL = 32;
 
 
 // Initialize our member variables
@@ -77,22 +77,25 @@ void DisplayDevice::Setup(int driverNum, int devNum, int width, int height, int 
         }
         else
         {
+            /*
             // Ran off the end of the list
             char message[80];
             sprintf(message, "Requested unavailable resolution %0dx%0dx%0d", width, height, depth);
             ShiError(message);
+            */
+            break;
         }
     }
 
     // Create an MPR device handle for this device
-    m_DXCtx = FalconDisplay.devmgr.CreateContext(driverNumber, devNum, resNum, fullScreen, win);
+    m_DXCtx = FalconDisplay.devmgr.CreateContext(driverNumber, devNum, resNum, width, height, fullScreen, win);
 
     if ( not m_DXCtx)
     {
         // try default device
         driverNumber = 0;
 
-        m_DXCtx = FalconDisplay.devmgr.CreateContext(driverNumber, 0, resNum, fullScreen, win);
+        m_DXCtx = FalconDisplay.devmgr.CreateContext(driverNumber, 0, resNum, width, height, fullScreen, win);
 
         if ( not m_DXCtx)
             return;

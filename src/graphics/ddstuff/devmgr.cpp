@@ -271,7 +271,7 @@ BOOL DeviceManager::ChooseDevice(int *usrDrvNum, int *usrDevNum, int *usrWidth)
 
 // OW
 
-DXContext *DeviceManager::CreateContext(int driverNum, int devNum, int resNum, BOOL bFullscreen, HWND hWnd)
+DXContext *DeviceManager::CreateContext(int driverNum, int devNum, int resNum, int outputWidth, int outputHeight, BOOL bFullscreen, HWND hWnd)
 {
     try
     {
@@ -283,9 +283,9 @@ DXContext *DeviceManager::CreateContext(int driverNum, int devNum, int resNum, B
 
         if ( not pD3DDI) return NULL;
 
-        LPDDSURFACEDESC2 pddsd = pDDI->GetDisplayMode(resNum);
+        //LPDDSURFACEDESC2 pddsd = pDDI->GetDisplayMode(resNum);
 
-        if ( not pddsd) return NULL;
+        //if ( not pddsd) return NULL;
 
         DXContext *pCtx = new DXContext;
 
@@ -302,7 +302,7 @@ DXContext *DeviceManager::CreateContext(int driverNum, int devNum, int resNum, B
 
 #endif
 
-        pCtx->Init(hWnd, pddsd->dwWidth, pddsd->dwHeight, pddsd->ddpfPixelFormat.dwRGBBitCount, bFullscreen ? true : false);
+        pCtx->Init(hWnd, outputWidth, outputHeight, 32, bFullscreen ? true : false);
 
         return pCtx;
     }
@@ -794,7 +794,17 @@ bool DXContext::SetRenderTarget(IDirectDrawSurface7 *pRenderTarget)
 
     catch (_com_error e)
     {
-        MonoPrint("DXContext::SetRenderTarget - Error 0x%X\n", e.Error());
+        LPTSTR error_text = NULL;
+        FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM |
+            FORMAT_MESSAGE_ALLOCATE_BUFFER |
+            FORMAT_MESSAGE_IGNORE_INSERTS,
+            NULL,
+            e.Error(),
+            MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+            (LPTSTR)&error_text, 0,
+            NULL);
+
+        MonoPrint("DXContext::SetRenderTarget - Error 0x%X %s\n", e.Error(), e.ErrorMessage());
         return false;
     }
 }
